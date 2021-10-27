@@ -38,7 +38,13 @@ gravatar = Gravatar(
 )
 
 ##CONNECT TO DB
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///blog.db"
+# if os.environ.get("DATABASE_URL") == None:
+
+
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+    "DATABASE_URL", "sqlite:///blog.db"
+)
+
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 login_manager = LoginManager()
@@ -84,9 +90,6 @@ class Comment(db.Model):
     text = db.Column(db.Text, nullable=False)
 
 
-db.create_all()
-
-
 def admin_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -99,7 +102,7 @@ def admin_only(f):
 
 @app.route("/")
 def get_all_posts():
-    posts = BlogPost.query.all()
+    posts = db.session.query(BlogPost).all()
     return render_template("index.html", all_posts=posts, current_user=current_user)
 
 
@@ -244,4 +247,4 @@ def delete_post(post_id):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(debug=True)
